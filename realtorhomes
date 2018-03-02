@@ -1,0 +1,72 @@
+import urllib.request
+from bs4 import BeautifulSoup as soup
+from time import sleep
+from random import randint
+import pandas as pd
+
+prices = []
+addresses = []
+citys = []
+states = []
+zipcodes = []
+bedrooms = []
+bathrooms = []
+brokers = []
+
+try:
+    
+
+    pages = [str(i) for i in range(1,110)]
+    for pg in pages:
+                   
+        headers = {}
+        headers['User-Agent'] = "Mozilla/5.0 (X11; Linux i686) AppleWebKit/536.17 (KHTML, like Gecko) Chrome/24.0.1312.27 Safari/537.17"
+        url = "https://www.trulia.com/for_sale/Chicago,IL/date;d_sort/" + pg +"_p/"
+        req = urllib.request.Request(url, headers = headers)
+                
+        #opening connection and grabbing page
+        uClient = urllib.request.urlopen(req)
+        sleep(randint(8, 15))
+        page_html = uClient.read()
+
+        # html parsing
+        page_soup = soup(page_html, "html.parser")
+
+        #grabs each house
+        containers = page_soup.findAll("div", {"class" : "ptm cardContainer positionRelative clickable"})
+        
+        print(url)
+        for container in containers:
+            
+            #grabs prices
+            if container.find('span', class_ = 'cardPrice h5 man pan typeEmphasize noWrap typeTruncate') is not None:               
+                price_container = container.findAll("span" , {"class" : "cardPrice h5 man pan typeEmphasize noWrap typeTruncate"})
+                price = price_container[0].text.replace('"' , '').replace(',' , '').replace('$' , '')
+                prices.append(price)
+            else:
+                prices.append('')
+            
+            #grabs addresses
+            if container.find('div' , class_ = 'h6 typeWeightNormal typeTruncate typeLowlight mvn') is not None:
+                address_container = container.findAll("div" , {"class" : "h6 typeWeightNormal typeTruncate typeLowlight mvn"})
+                streetAddress = address_container[0].text.replace(',' , '')
+                addresses.append(streetAddress)
+            else:
+                addresses.append('')
+                              
+            #grabs bedrooms
+            if container.find('ul' , class_ = 'listInline typeTruncate mvn') is not None:
+                bedroom_container = container.findAll("ul" , {"class" : "listInline typeTruncate mvn"})
+                bedroom = bedroom_container[0].li.text
+                bedrooms.append(bedroom)
+            else:
+                bedrooms.append('')
+                                                   
+        
+            houseinfo = pd.DataFrame ({'address' : addresses, 'bedroom' : bedrooms, 'prices' : prices})
+        
+            houseinfo.to_csv('truliacom.csv')
+            
+        	     
+except Exception as e:
+    print (str(e))
