@@ -1,3 +1,10 @@
+"""
+Created on Thu Mar  1 23:12:12 2018
+
+@author: Roman
+"""
+
+
 import urllib.request
 from bs4 import BeautifulSoup as soup
 from time import sleep
