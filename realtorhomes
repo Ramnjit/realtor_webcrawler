@@ -23,12 +23,12 @@ brokers = []
 try:
     
 
-    pages = [str(i) for i in range(1,110)]
+    pages = [str(i) for i in range(1,62)]
     for pg in pages:
                    
         headers = {}
         headers['User-Agent'] = "Mozilla/5.0 (X11; Linux i686) AppleWebKit/536.17 (KHTML, like Gecko) Chrome/24.0.1312.27 Safari/537.17"
-        url = "https://www.trulia.com/for_sale/Chicago,IL/date;d_sort/" + pg +"_p/"
+        url = "https://www.realtor.com/realestateandhomes-search/Chicago_IL/sby-6/pg-" + pg + "?pgsz=50"
         req = urllib.request.Request(url, headers = headers)
                 
         #opening connection and grabbing page
@@ -40,39 +40,72 @@ try:
         page_soup = soup(page_html, "html.parser")
 
         #grabs each house
-        containers = page_soup.findAll("div", {"class" : "ptm cardContainer positionRelative clickable"})
+        containers = page_soup.findAll("div", {"class" : "srp-item-body"})
         
         print(url)
         for container in containers:
             
-            #grabs prices
-            if container.find('span', class_ = 'cardPrice h5 man pan typeEmphasize noWrap typeTruncate') is not None:               
-                price_container = container.findAll("span" , {"class" : "cardPrice h5 man pan typeEmphasize noWrap typeTruncate"})
-                price = price_container[0].text.replace('"' , '').replace(',' , '').replace('$' , '')
+            #grabs prices 
+            if container.find('span', class_ = 'data-price-display') is not None:               
+                price_container = container.findAll("span" , {"class" : "data-price-display"})
+                price = price_container[0].text.replace('"' , '').replace(',' , '')
                 prices.append(price)
             else:
                 prices.append('')
             
             #grabs addresses
-            if container.find('div' , class_ = 'h6 typeWeightNormal typeTruncate typeLowlight mvn') is not None:
-                address_container = container.findAll("div" , {"class" : "h6 typeWeightNormal typeTruncate typeLowlight mvn"})
+            if container.find('span' , class_ = 'listing-street-address') is not None:
+                address_container = container.findAll("span" , {"class" : "listing-street-address"})
                 streetAddress = address_container[0].text.replace(',' , '')
                 addresses.append(streetAddress)
             else:
                 addresses.append('')
-                              
+            
+            #grabs cities
+            if container.find('span' , class_ = 'listing-city') is not None:
+                city_container = container.findAll("span" , {"class" : "listing-city"})
+                city = city_container[0].text
+                citys.append(city)
+            else:
+                citys.append('')
+            
+            #grabs state
+            if container.find('span' , class_ = 'listing-region') is not None:
+                state_container = container.findAll("span" , {"class" : "listing-region"})
+                state = state_container[0].text
+                states.append(state)
+            else:
+                states.append('')
+                
+            #grabs zipcode    
+            if container.find('span' , class_ = 'listing-postal') is not None:
+                zipcode_container = container.findAll("span" , {"class" : "listing-postal"})
+                zipcode = zipcode_container[0].text
+                zipcodes.append(zipcode)
+            else:
+                zipcodes.append('')
+            
             #grabs bedrooms
-            if container.find('ul' , class_ = 'listInline typeTruncate mvn') is not None:
-                bedroom_container = container.findAll("ul" , {"class" : "listInline typeTruncate mvn"})
-                bedroom = bedroom_container[0].li.text
-                bedrooms.append(bedroom)
+            if container.find('span' , class_ = 'data-value meta-beds') is not None:
+                bedroom_container = container.findAll("span" , {"class" : "data-value meta-beds"})
+                bedroom = bedroom_container[0].text
+                bedrooms.append(bedroom)                           
             else:
                 bedrooms.append('')
-                                                   
+             
+            #grabs broker                                            
+            if container.find('span' , class_ = 'srp-item-broker-text-sm') is not None:
+                broker_container = container.findAll("span" , {"class" : "srp-item-broker-text-sm"})
+                broker = broker_container[0].text.replace('"' , '').replace(',' , '')
+                brokers.append(broker)
+            else:
+                brokers.append('')
+                
+                
+
+            houseinfo = pd.DataFrame ({'address' : addresses, 'bedroom' : bedrooms, 'broker' : brokers,'city' : citys, 'prices' : prices,'state' : state, 'zipcodes' : zipcodes})
         
-            houseinfo = pd.DataFrame ({'address' : addresses, 'bedroom' : bedrooms, 'prices' : prices})
-        
-            houseinfo.to_csv('truliacom.csv')
+            houseinfo.to_csv('realtorcom.csv')
             
         	     
 except Exception as e:
